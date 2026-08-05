@@ -1,0 +1,24 @@
+{
+  "name": "hello-world-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tabler/icons": "^3.46.0",
+    "@vaadin/router": "^2.0.0",
+    "lit": "^3.2.1",
+    "lucide-static": "^1.28.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/node": "^20",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5",
+    "vite": "^6.0.0"
+  }
+}

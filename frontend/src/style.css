@@ -1,0 +1,155 @@
+@import 'tailwindcss';
+
+@layer base {
+  :root {
+    /* Brand Colors (sourced from aixalab.comtor.net's nue-common-style.css) */
+    --primary-color2: #083461;
+    --secondary-color2: #0b4886;
+    --primary-color: #c20313;
+    --secondary-color: #61080f;
+
+    /* Neutrals & Backgrounds */
+    --bg-page: #ffffff;
+    --bg-main: #f9f9f9;
+    --bg-hover-light: #fafbfc;
+    --bg-neutral: #f5f5f5;
+
+    /* Grays & Borders */
+    --border-color: #e0e0e0;
+    --border-input: #ccc;
+    --border-card: #ddd;
+    --border-soft: #eee;
+    --shadow-light: rgba(0, 0, 0, 0.08);
+    --shadow-main: rgba(0, 0, 0, 0.1);
+    --shadow-deep: rgba(0, 0, 0, 0.13);
+
+    /* Text Colors */
+    --text-main: #000000;
+    --text-dark: #333;
+    --text-muted: #666;
+    --text-light: #888;
+    --text-kpi: #6c757d;
+    --text-kpi-val: #343a40;
+
+    /* Accents */
+    --clr-link: #007bff;
+    --clr-accent-blue: #2a7ae2;
+    --clr-bot-msg: #2673b2;
+    --clr-user-msg: #e0e3e8;
+
+    /* Legacy mapping */
+    --background-color: #b2b2b8;
+    --default-color: var(--text-main);
+
+    font-family: 'Montserrat', system-ui, Avenir, Helvetica, Arial, sans-serif;
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    background-color: var(--bg-page);
+    color: var(--text-main);
+  }
+
+  /* Lit custom elements render into the light DOM in this project, so
+     these need an explicit display since browsers treat unknown
+     elements as inline by default. */
+  login-form,
+  register-form,
+  forgot-password-form,
+  app-root,
+  login-page,
+  register-page,
+  forgot-password-page,
+  home-view,
+  users-view,
+  profiles-view,
+  charges-view,
+  app-header,
+  app-sidebar,
+  app-content,
+  app-footer,
+  user-management,
+  profile-management,
+  charge-management {
+    display: block;
+  }
+
+  app-icon {
+    display: inline-flex;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+  }
+
+  app-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  lucide-icon {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  lucide-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke-width: 2;
+  }
+
+  app-sidebar,
+  app-header,
+  app-content,
+  user-management,
+  profile-management,
+  charge-management {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* These sit next to app-sidebar in a flex row and need to grow into
+     the remaining space themselves (the flex utility class Tailwind
+     applies is on the <main> *inside* the custom element, not on the
+     custom element itself, which is the actual flex item). */
+  app-content,
+  user-management,
+  profile-management,
+  charge-management {
+    flex: 1 1 0%;
+    min-width: 0;
+  }
+}
+
+@layer components {
+  .card {
+    @apply flex flex-col gap-3 w-80;
+  }
+
+  .field {
+    @apply px-3 py-2 rounded-md border bg-transparent text-inherit text-base;
+    border-color: var(--border-input);
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-md text-white text-base whitespace-nowrap cursor-pointer disabled:opacity-60 disabled:cursor-default;
+    background-color: var(--primary-color2);
+  }
+  .btn:hover:not(:disabled) {
+    background-color: var(--secondary-color2);
+  }
+
+  .btn-outline {
+    @apply px-3 py-1.5 rounded-md border bg-transparent text-sm cursor-pointer;
+    border-color: var(--border-input);
+    color: var(--text-main);
+  }
+
+  .error-text {
+    @apply m-0;
+    color: var(--primary-color);
+  }
+}
