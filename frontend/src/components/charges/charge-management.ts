@@ -355,16 +355,13 @@ export class ChargeManagement extends LitElement {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Documento</label>
-                <select
+                <input
+                  type="text"
+                  placeholder="Factura, Boleta, etc."
                   class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
                   .value=${this.document_type}
-                  @change=${(e: Event) => (this.document_type = (e.target as HTMLSelectElement).value)}
-                >
-                  <option value="Factura">Factura</option>
-                  <option value="Boleta">Boleta</option>
-                  <option value="Nota de Débito">Nota de Débito</option>
-                  <option value="Recibo">Recibo</option>
-                </select>
+                  @input=${(e: Event) => (this.document_type = (e.target as HTMLInputElement).value)}
+                />
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Nº Documento</label>
@@ -382,16 +379,13 @@ export class ChargeManagement extends LitElement {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Doc. Cliente</label>
-                <select
+                <input
+                  type="text"
+                  placeholder="RUC, DNI, etc."
                   class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
                   .value=${this.customer_document_type}
-                  @change=${(e: Event) => (this.customer_document_type = (e.target as HTMLSelectElement).value)}
-                >
-                  <option value="RUC">RUC</option>
-                  <option value="DNI">DNI</option>
-                  <option value="CE">CE</option>
-                  <option value="PASAPORTE">Pasaporte</option>
-                </select>
+                  @input=${(e: Event) => (this.customer_document_type = (e.target as HTMLInputElement).value)}
+                />
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Nº Doc. Cliente</label>
@@ -499,19 +493,16 @@ export class ChargeManagement extends LitElement {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Estado de Entrega</label>
-                <select
+                <input
+                  type="text"
+                  placeholder="Pendiente, Enviado, etc."
                   class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
                   .value=${this.delivery_status}
-                  @change=${(e: Event) => (this.delivery_status = (e.target as HTMLSelectElement).value)}
-                >
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="Enviado">Enviado</option>
-                  <option value="Entregado">Entregado</option>
-                  <option value="Fallido">Fallido</option>
-                </select>
+                  @input=${(e: Event) => (this.delivery_status = (e.target as HTMLInputElement).value)}
+                />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatario (Email/Tel)</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatario (Tel/Whatsapp)</label>
                 <input
                   type="text"
                   placeholder="cliente@correo.com"
