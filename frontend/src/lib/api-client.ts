@@ -1,5 +1,7 @@
 import { API_BASE } from '../constants'
 import { Session } from '../session/session'
+import { Router } from '@vaadin/router'
+
 
 export class ApiError extends Error {
   status: number
@@ -24,7 +26,7 @@ async function request(path: string, options: RequestInit, auth: boolean) {
   // to log them out.
   if (auth && res.status === 401) {
     Session.getInstance().clear()
-    if (typeof window !== 'undefined') window.location.href = '/login'
+    if (typeof window !== 'undefined') Router.go('/login');
   }
 
   if (!res.ok) {
