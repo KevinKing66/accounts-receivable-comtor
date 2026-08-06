@@ -3,30 +3,30 @@ from typing import List, Optional, Tuple
 from models.entities.charge import Charge
 from services.sqlalchemy_service import SQLAlchemyService
 from repositories.charge_repository import ChargeRepository
-from services.vfs_service import VFSService
+# from services.vfs_service import VFSService
 
 class ChargeService(SQLAlchemyService[Charge]):
-    vfs_service: VFSService
+    # vfs_service: VFSService
     def __init__(self, session):
         super().__init__(
             session=session,
             model=Charge,
             repository_class=ChargeRepository,
         )
-        self.vfs_service = VFSService(session=session)
+        # self.vfs_service = VFSService(session=session)
 
     def create(self, charge: Charge) -> Charge:
         if not charge.uuid:
             charge.uuid = str(uuid.uuid4())
             
         res = super().create(charge)
-        self.vfs_service.create_from_base64_v2(uuid=str(charge.uuid), full_base64=str(charge.attachment_base64))
+        # self.vfs_service.create_from_base64_v2(uuid=str(charge.uuid), full_base64=str(charge.attachment_base64))
         return res
     
     def update(self, charge: Charge) -> Charge:
         res = super().update(charge)
-        if str(charge.attachment_base64) != str(charge.uuid):
-            self.vfs_service.update_from_base64_v2(uuid=str(charge.uuid), full_base64=str(charge.attachment_base64))
+        # if str(charge.attachment_base64) != str(charge.uuid):
+        #     self.vfs_service.update_from_base64_v2(uuid=str(charge.uuid), full_base64=str(charge.attachment_base64))
         return res
 
     def find_page(
