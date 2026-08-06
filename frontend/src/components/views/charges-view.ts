@@ -4,6 +4,7 @@ import '../layout/app-header'
 import '../layout/app-sidebar'
 import '../charges/charge-management'
 import '../layout/app-footer'
+import { Router } from '@vaadin/router'
 
 export class ChargesView extends LitElement {
   static properties = {
@@ -29,7 +30,7 @@ export class ChargesView extends LitElement {
     super.connectedCallback()
     document.title = 'Gestión de Cobros - Hello World'
     if (!Session.getInstance().isAuthenticated()) {
-      window.location.href = '/login'
+      Router.go('/login');
     }
   }
 
