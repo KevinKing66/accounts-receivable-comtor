@@ -22,6 +22,12 @@ class ChargeService(SQLAlchemyService[Charge]):
         res = super().create(charge)
         self.vfs_service.create_from_base64_v2(uuid=str(charge.uuid), full_base64=str(charge.attachment_base64))
         return res
+    
+    def update(self, charge: Charge) -> Charge:
+        res = super().update(charge)
+        if str(charge.attachment_base64) != str(charge.uuid):
+            self.vfs_service.update_from_base64_v2(uuid=str(charge.uuid), full_base64=str(charge.attachment_base64))
+        return res
 
     def find_page(
         self, page: int, page_size: int, search: Optional[str] = None

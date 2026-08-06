@@ -213,6 +213,13 @@ class VFSService(SQLAlchemyService[VFS]):
             content_type=content_type,
             file_content=file_content,
         )
+    
+    def update_from_base64_v2(self, uuid: UUIDStr, full_base64: str) -> VFS | None:
+        existing_vfs: VFS | None = super().find_by_id(uuid)
+        if existing_vfs is not None:
+            self.delete(existing_vfs)
+            return self.create_from_base64_v2(uuid=uuid, full_base64=full_base64)
+        return None
 
     def deleteFromKey(self, uuid_str: UUIDStr) -> None:
         # Usa el método de búsqueda nativo de tu servicio base (por ejemplo, super().find(uuid_str) o self.session.get(VFS, uuid_str))
