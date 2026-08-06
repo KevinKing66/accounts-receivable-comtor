@@ -1,6 +1,7 @@
 import { LitElement, html, nothing } from 'lit'
 import { Session } from '../../session/session'
 import { apiClient } from '../../lib/api-client'
+import { Router } from '@vaadin/router'
 import { initialsFromIdentity, displayNameFromIdentity } from '../../lib/identity'
 import '../common/lucide-icon'
 import type { LucideIconName } from '../common/lucide-icon'
@@ -106,7 +107,7 @@ export class AppHeader extends LitElement {
       // ignore network errors on logout; clear the local session regardless
     }
     Session.getInstance().clear()
-    window.location.href = '/login'
+    Router.go('/login');
   }
 
   private renderSyncStatus() {

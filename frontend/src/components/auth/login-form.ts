@@ -1,6 +1,7 @@
 import { LitElement, html } from 'lit'
 import { apiClient, ApiError } from '../../lib/api-client'
 import { Session, SessionData } from '../../session/session'
+import { Router } from '@vaadin/router'
 import '../common/icon'
 
 export class LoginForm extends LitElement {
@@ -59,7 +60,7 @@ export class LoginForm extends LitElement {
         false
       )) as SessionData
       Session.getInstance().set(data)
-      window.location.href = '/'
+      Router.go('/login');
     } catch (err) {
       this.error =
         err instanceof ApiError && err.status === 401

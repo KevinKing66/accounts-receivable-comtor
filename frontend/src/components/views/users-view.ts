@@ -1,5 +1,6 @@
 import { LitElement, html } from 'lit'
 import { Session, Privilege } from '../../session/session'
+import { Router } from '@vaadin/router'
 import '../layout/app-header'
 import '../layout/app-sidebar'
 import '../users/user-management'
@@ -29,7 +30,7 @@ export class UsersView extends LitElement {
     super.connectedCallback()
     document.title = 'Usuarios - Hello World'
     if (!Session.getInstance().isAuthenticated()) {
-      window.location.href = '/login'
+      Router.go('/login');
     }
   }
 
