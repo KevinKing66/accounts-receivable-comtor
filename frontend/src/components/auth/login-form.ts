@@ -60,7 +60,7 @@ export class LoginForm extends LitElement {
         false
       )) as SessionData
       Session.getInstance().set(data)
-      Router.go('/login');
+      Router.go('/')
     } catch (err) {
       this.error =
         err instanceof ApiError && err.status === 401
@@ -69,6 +69,11 @@ export class LoginForm extends LitElement {
     } finally {
       this.loading = false
     }
+  }
+
+  private navigateTo(e: Event, path: string) {
+    e.preventDefault()
+    Router.go(path)
   }
 
   render() {
@@ -109,12 +114,20 @@ export class LoginForm extends LitElement {
         </button>
         ${this.error ? html`<p class="error-text">${this.error}</p>` : ''}
         <div class="flex flex-col gap-1 text-sm mt-1">
-          <a href="/forgot-password" class="text-[var(--clr-link)]"
+          <a
+            href="/forgot-password"
+            @click=${(e: Event) => this.navigateTo(e, '/forgot-password')}
+            class="text-[var(--clr-link)]"
             >¿Olvidaste tu contraseña?</a
           >
           <span
             >¿No tienes cuenta?
-            <a href="/register" class="text-[var(--clr-link)]">Regístrate</a></span
+            <a
+              href="/register"
+              @click=${(e: Event) => this.navigateTo(e, '/register')}
+              class="text-[var(--clr-link)]"
+              >Regístrate</a
+            ></span
           >
         </div>
       </form>

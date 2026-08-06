@@ -1,4 +1,5 @@
 import { LitElement, html } from 'lit'
+import { Router } from '@vaadin/router'
 import '../common/icon'
 
 export class ForgotPasswordForm extends LitElement {
@@ -29,6 +30,11 @@ export class ForgotPasswordForm extends LitElement {
     this.submitted = true
   }
 
+  private navigateTo(e: Event, path: string) {
+    e.preventDefault()
+    Router.go(path)
+  }
+
   render() {
     if (this.submitted) {
       return html`
@@ -41,7 +47,12 @@ export class ForgotPasswordForm extends LitElement {
             Si existe una cuenta con ese usuario, un administrador se pondrá en contacto para
             ayudarte a recuperar el acceso.
           </p>
-          <a href="/login" class="text-sm text-[var(--clr-link)]">Volver a iniciar sesión</a>
+          <a
+            href="/login"
+            @click=${(e: Event) => this.navigateTo(e, '/login')}
+            class="text-sm text-[var(--clr-link)]"
+            >Volver a iniciar sesión</a
+          >
         </div>
       `
     }
@@ -70,7 +81,12 @@ export class ForgotPasswordForm extends LitElement {
           />
         </div>
         <button type="submit" class="btn">Enviar solicitud</button>
-        <a href="/login" class="text-sm text-[var(--clr-link)]">Volver a iniciar sesión</a>
+        <a
+          href="/login"
+          @click=${(e: Event) => this.navigateTo(e, '/login')}
+          class="text-sm text-[var(--clr-link)]"
+          >Volver a iniciar sesión</a
+        >
       </form>
     `
   }

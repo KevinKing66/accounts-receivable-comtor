@@ -100,6 +100,12 @@ export class AppHeader extends LitElement {
     this.searchOpen = false
   }
 
+  private navigateTo(e: Event, path: string) {
+    e.preventDefault()
+    this.userMenuOpen = false
+    Router.go(path)
+  }
+
   private async logout() {
     try {
       await apiClient.post('/logout')
@@ -217,6 +223,7 @@ export class AppHeader extends LitElement {
               >
                 <a
                   href="/mi-perfil"
+                  @click=${(e: Event) => this.navigateTo(e, '/mi-perfil')}
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-[#0F172A] transition-colors duration-150 ease-out hover:bg-slate-50"
                 >
                   <lucide-icon name="user" class="text-[#64748B]"></lucide-icon>
@@ -224,6 +231,7 @@ export class AppHeader extends LitElement {
                 </a>
                 <a
                   href="/configuracion"
+                  @click=${(e: Event) => this.navigateTo(e, '/configuracion')}
                   class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-[#0F172A] transition-colors duration-150 ease-out hover:bg-slate-50"
                 >
                   <lucide-icon name="settings" class="text-[#64748B]"></lucide-icon>

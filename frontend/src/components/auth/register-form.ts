@@ -1,4 +1,5 @@
 import { LitElement, html } from 'lit'
+import { Router } from '@vaadin/router'
 import { apiClient, ApiError } from '../../lib/api-client'
 import '../common/icon'
 
@@ -72,6 +73,11 @@ export class RegisterForm extends LitElement {
     }
   }
 
+  private navigateTo(e: Event, path: string) {
+    e.preventDefault()
+    Router.go(path)
+  }
+
   render() {
     if (this.success) {
       return html`
@@ -80,7 +86,15 @@ export class RegisterForm extends LitElement {
           <h1 class="text-xl font-semibold m-0 mb-2 text-[var(--primary-color2)]">
             Cuenta creada
           </h1>
-          <p>Ya puedes <a href="/login" class="text-[var(--clr-link)]">iniciar sesión</a>.</p>
+          <p>
+            Ya puedes
+            <a
+              href="/login"
+              @click=${(e: Event) => this.navigateTo(e, '/login')}
+              class="text-[var(--clr-link)]"
+              >iniciar sesión</a
+            >.
+          </p>
         </div>
       `
     }
@@ -128,7 +142,12 @@ export class RegisterForm extends LitElement {
           ${this.loading ? 'Creando...' : 'Registrarme'}
         </button>
         ${this.error ? html`<p class="error-text">${this.error}</p>` : ''}
-        <a href="/login" class="text-sm text-[var(--clr-link)]">Ya tengo cuenta</a>
+        <a
+          href="/login"
+          @click=${(e: Event) => this.navigateTo(e, '/login')}
+          class="text-sm text-[var(--clr-link)]"
+          >Ya tengo cuenta</a
+        >
       </form>
     `
   }

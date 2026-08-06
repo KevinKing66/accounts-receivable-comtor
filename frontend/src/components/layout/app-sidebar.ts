@@ -1,4 +1,5 @@
 import { LitElement, html, nothing } from 'lit'
+import { Router } from '@vaadin/router'
 import { Session } from '../../session/session'
 import { initialsFromIdentity, displayNameFromIdentity } from '../../lib/identity'
 import '../common/lucide-icon'
@@ -105,6 +106,11 @@ export class AppSidebar extends LitElement {
     return href === '/' ? this.currentPath === '/' : this.currentPath.startsWith(href)
   }
 
+  private navigateTo(e: Event, href: string) {
+    e.preventDefault()
+    Router.go(href)
+  }
+
   private renderNavItem(item: NavItem) {
     if (item.visible === false) return nothing
     const active = this.isActive(item.href)
@@ -112,6 +118,7 @@ export class AppSidebar extends LitElement {
       <li class="relative group/item">
         <a
           href=${item.href}
+          @click=${(e: Event) => this.navigateTo(e, item.href)}
           aria-current=${active ? 'page' : nothing}
           @mouseenter=${(e: MouseEvent) => this.showTooltip(e, item.label)}
           @mouseleave=${() => this.hideTooltip()}
@@ -145,7 +152,7 @@ export class AppSidebar extends LitElement {
         style="width: ${this.collapsed ? '72px' : '260px'}"
       >
         <div class="flex items-center ${this.collapsed ? 'justify-center' : 'justify-between'} px-4 py-5">
-          <a href="/" class="flex items-center gap-2.5 overflow-hidden">
+          <a href="/" @click=${(e: Event) => this.navigateTo(e, '/')} class="flex items-center gap-2.5 overflow-hidden">
             <img src="/aixa-logo.svg" alt="AIXA" class="h-7 w-7 shrink-0" />
             ${this.collapsed
         ? nothing
