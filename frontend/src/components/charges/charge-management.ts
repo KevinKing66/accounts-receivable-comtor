@@ -502,10 +502,10 @@ export class ChargeManagement extends LitElement {
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatario (Tel/Whatsapp)</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatario (Whatsapp)</label>
                 <input
                   type="text"
-                  placeholder="cliente@correo.com"
+                  placeholder="+57 3106112991"
                   class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
                   .value=${this.recipient}
                   @input=${(e: Event) => (this.recipient = (e.target as HTMLInputElement).value)}
