@@ -41,3 +41,14 @@ class ChargePage(BaseModel):
     total: int
     page: int
     page_size: int
+
+class ChargeCalculation(BaseModel):
+    customer_key: Optional[str] = None
+    customer_document_number: Optional[str] = None
+    customer_name: Optional[str] = None
+    recipient: Optional[str] = None
+    most_recent_date: Optional[date] = None
+    total_charges: int
+    total_amount: float
+    total_discounted_amount: float
+    total_tax: float
