@@ -47,6 +47,18 @@ class ChargeService(SQLAlchemyService[Charge]):
         charges, total = self._repo().find_page(page, page_size, search)
         return [self._hydrate_attachment(charge) for charge in charges], total
 
+    def calculate_by_customer(self, customer_search: str) -> dict:
+        return self._repo().calculate_by_customer(customer_search)
+
+    def calculate_grouped_by_customer(
+        self, customer_search: Optional[str] = None
+    ) -> List[dict]:
+        return self._repo().calculate_grouped_by_customer(customer_search)
+
+    def find_pending_by_customer(self, customer_search: str) -> List[Charge]:
+        charges = self._repo().find_pending_by_customer(customer_search)
+        return [self._hydrate_attachment(charge) for charge in charges]
+
     def _save_attachment(self, charge: Charge) -> None:
         attachment = str(charge.attachment_base64 or "")
         if not attachment or not attachment.startswith("data:"):

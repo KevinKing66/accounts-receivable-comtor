@@ -5,7 +5,13 @@ from typing import Optional
 
 from services.charge_service import ChargeService
 from repositories.sqlalchemy_db_manager import SqlAlchemyDatabaseManager
-from dto.charge_dto import ChargePage, ChargeResponse, ChargeCreate, ChargeUpdate
+from dto.charge_dto import (
+    ChargeCalculation,
+    ChargePage,
+    ChargeResponse,
+    ChargeCreate,
+    ChargeUpdate,
+)
 from models.entities.charge import Charge
 
 router = InferringRouter()
@@ -22,6 +28,27 @@ class ChargeEndpoint:
         with SqlAlchemyDatabaseManager.session("primary") as session:
             items, total = ChargeService(session).find_page(page, page_size, search)
             return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+    @router.get("/charges/customer/calculation", response_model=ChargeCalculation)
+    def calculate_charges_by_customer(
+        self,
+        customer_name: str = Query(..., min_length=1),
+    ):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            return ChargeService(session).calculate_by_customer(customer_name)
+
+    @router.get("/charges/customer/calculations", response_model=list[ChargeCalculation])
+    def calculate_charges_grouped_by_customer(self):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            return ChargeService(session).calculate_grouped_by_customer()
+
+    @router.get("/charges/customer/pending", response_model=list[ChargeResponse])
+    def get_pending_charges_by_customer(
+        self,
+        customer_name: str = Query(..., min_length=1),
+    ):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            return ChargeService(session).find_pending_by_customer(customer_name)
 
     @router.get("/charges/{charge_uuid}", response_model=ChargeResponse)
     def get_charge(self, charge_uuid: str):
