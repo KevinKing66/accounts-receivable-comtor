@@ -32,23 +32,26 @@ class ChargeEndpoint:
     @router.get("/charges/customer/calculation", response_model=ChargeCalculation)
     def calculate_charges_by_customer(
         self,
-        customer_name: str = Query(..., min_length=1),
+        customer_search: str = Query(..., min_length=1),
     ):
         with SqlAlchemyDatabaseManager.session("primary") as session:
-            return ChargeService(session).calculate_by_customer(customer_name)
+            return ChargeService(session).calculate_by_customer(customer_search)
 
     @router.get("/charges/customer/calculations", response_model=list[ChargeCalculation])
-    def calculate_charges_grouped_by_customer(self):
+    def calculate_charges_grouped_by_customer(
+        self,
+        customer_search: Optional[str] = Query(None, min_length=1),
+    ):
         with SqlAlchemyDatabaseManager.session("primary") as session:
-            return ChargeService(session).calculate_grouped_by_customer()
+            return ChargeService(session).calculate_grouped_by_customer(customer_search)
 
     @router.get("/charges/customer/pending", response_model=list[ChargeResponse])
     def get_pending_charges_by_customer(
         self,
-        customer_name: str = Query(..., min_length=1),
+        customer_search: str = Query(..., min_length=1),
     ):
         with SqlAlchemyDatabaseManager.session("primary") as session:
-            return ChargeService(session).find_pending_by_customer(customer_name)
+            return ChargeService(session).find_pending_by_customer(customer_search)
 
     @router.get("/charges/{charge_uuid}", response_model=ChargeResponse)
     def get_charge(self, charge_uuid: str):
