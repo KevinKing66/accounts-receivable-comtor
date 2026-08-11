@@ -459,7 +459,7 @@ export class ChargeManagement extends LitElement {
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Con Descuento</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Con Descuento</label>
                 <input
                   type="number"
                   step="0.01"
@@ -471,7 +471,7 @@ export class ChargeManagement extends LitElement {
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Impuesto / IGV (%)</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Impuestos (%)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -650,7 +650,7 @@ export class ChargeManagement extends LitElement {
             <div><span class="font-semibold text-slate-500">Cliente:</span> <p class="text-slate-800 font-medium">${t.customer_name || '—'}</p></div>
             <div><span class="font-semibold text-slate-500">Doc Cliente:</span> <p class="text-slate-800">${t.customer_document_type} ${t.customer_document_number}</p></div>
             <div><span class="font-semibold text-slate-500">Monto Principal:</span> <p class="text-slate-800 font-bold">${this.formatCurrency(t.amount)}</p></div>
-            <div><span class="font-semibold text-slate-500">Con Descuento:</span> <p class="text-slate-800">${this.formatCurrency(t.discounted_amount)}</p></div>
+            <div><span class="font-semibold text-slate-500">Valor Con Descuento:</span> <p class="text-slate-800">${this.formatCurrency(t.discounted_amount)}</p></div>
             <div><span class="font-semibold text-slate-500">Impuesto:</span> <p class="text-slate-800">${this.formatPercent(t.tax)}</p></div>
             <div><span class="font-semibold text-slate-500">Estado Entrega:</span> <p class="text-slate-800">${t.delivery_status || '—'}</p></div>
             <div><span class="font-semibold text-slate-500">F. Vencimiento:</span> <p class="text-slate-800">${this.formatDate(t.due_date)}</p></div>
