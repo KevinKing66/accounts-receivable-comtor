@@ -17,10 +17,9 @@ class ChargeBase(BaseModel):
     late_fee_date: Optional[date] = None
     amount: Optional[float] = Field(None, ge=0)
     discounted_amount: Optional[float] = Field(None, ge=0)
-    tax: Optional[float] = Field(None, ge=0)
+    tax: Optional[float] = Field(None, ge=0, le=100)
     is_read: Optional[int] = Field(0, ge=0, le=1)
     attachment_base64: Optional[str] = None
-    template: Optional[str] = None
     recipient: Optional[str] = None
 
 class ChargeCreate(ChargeBase):

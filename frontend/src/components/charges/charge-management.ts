@@ -21,11 +21,36 @@ export interface ChargeRecord {
   tax?: number | null
   is_read?: number | null
   attachment_base64?: string | null
-  template?: string | null
   recipient?: string | null
 }
 
 const PAGE_SIZE = 10
+const DOCUMENT_TYPES = ['Factura', 'Comprobante'] as const
+const CUSTOMER_DOCUMENT_TYPES = [
+  'CC - Cedula de ciudadania',
+  'CE - Cedula de extranjeria',
+  'NIT - Empresa',
+  'Pasaporte',
+] as const
+
+const currencyFormatter = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
+const percentFormatter = new Intl.NumberFormat('es-CO', {
+  style: 'percent',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})
+
+const dateFormatter = new Intl.DateTimeFormat('es-CO', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
 
 interface ChargePageResponse {
   items: ChargeRecord[]
@@ -67,7 +92,6 @@ export class ChargeManagement extends LitElement {
     tax: { type: Number },
     is_read: { type: Number },
     attachment_base64: { type: String },
-    template: { type: String },
     recipient: { type: String },
   }
 
@@ -99,7 +123,6 @@ export class ChargeManagement extends LitElement {
   declare tax: number | ''
   declare is_read: number
   declare attachment_base64: string
-  declare template: string
   declare recipient: string
 
   private filterDebounce?: ReturnType<typeof setTimeout>
@@ -132,7 +155,7 @@ export class ChargeManagement extends LitElement {
   private resetForm() {
     this.document_type = 'Factura'
     this.document_number = ''
-    this.customer_document_type = 'RUC'
+    this.customer_document_type = 'NIT - Empresa'
     this.customer_document_number = ''
     this.customer_name = ''
     this.charge_details = ''
@@ -147,13 +170,27 @@ export class ChargeManagement extends LitElement {
     this.tax = ''
     this.is_read = 0
     this.attachment_base64 = ''
-    this.template = 'Standard'
     this.recipient = ''
     this.formError = ''
   }
 
   private get pageCount(): number {
     return Math.max(1, Math.ceil(this.total / PAGE_SIZE))
+  }
+
+  private formatCurrency(value?: number | null): string {
+    return currencyFormatter.format(Number(value ?? 0))
+  }
+
+  private formatPercent(value?: number | null): string {
+    return percentFormatter.format(Number(value ?? 0) / 100)
+  }
+
+  private formatDate(value?: string | null): string {
+    if (!value) return '—'
+    const [year, month, day] = value.split('-').map(Number)
+    if (!year || !month || !day) return value
+    return dateFormatter.format(new Date(year, month - 1, day))
   }
 
   private async loadCharges() {
@@ -198,7 +235,7 @@ export class ChargeManagement extends LitElement {
     this.target = charge
     this.document_type = charge.document_type || 'Factura'
     this.document_number = charge.document_number || ''
-    this.customer_document_type = charge.customer_document_type || 'RUC'
+    this.customer_document_type = charge.customer_document_type || 'NIT - Empresa'
     this.customer_document_number = charge.customer_document_number || ''
     this.customer_name = charge.customer_name || ''
     this.charge_details = charge.charge_details || ''
@@ -213,7 +250,6 @@ export class ChargeManagement extends LitElement {
     this.tax = charge.tax ?? ''
     this.is_read = charge.is_read ?? 0
     this.attachment_base64 = charge.attachment_base64 || ''
-    this.template = charge.template || 'Standard'
     this.recipient = charge.recipient || ''
     this.formError = ''
     this.modal = 'edit'
@@ -259,8 +295,8 @@ export class ChargeManagement extends LitElement {
       this.formError = 'El monto con descuento debe ser un número mayor o igual a 0.'
       return false
     }
-    if (this.tax !== '' && (Number(this.tax) < 0 || isNaN(Number(this.tax)))) {
-      this.formError = 'El impuesto debe ser un número mayor o igual a 0.'
+    if (this.tax !== '' && (Number(this.tax) < 0 || Number(this.tax) > 100 || isNaN(Number(this.tax)))) {
+      this.formError = 'El impuesto debe ser un porcentaje entre 0 y 100.'
       return false
     }
     return true
@@ -292,7 +328,6 @@ export class ChargeManagement extends LitElement {
         tax: this.tax !== '' ? Number(this.tax) : undefined,
         is_read: Number(this.is_read),
         attachment_base64: this.attachment_base64 || undefined,
-        template: this.template || undefined,
         recipient: this.recipient || undefined,
       }
 
@@ -355,13 +390,13 @@ export class ChargeManagement extends LitElement {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Documento</label>
-                <input
-                  type="text"
-                  placeholder="Factura, Boleta, etc."
+                <select
                   class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
                   .value=${this.document_type}
-                  @input=${(e: Event) => (this.document_type = (e.target as HTMLInputElement).value)}
-                />
+                  @change=${(e: Event) => (this.document_type = (e.target as HTMLSelectElement).value)}
+                >
+                  ${DOCUMENT_TYPES.map((type) => html`<option value=${type}>${type}</option>`)}
+                </select>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Nº Documento</label>
@@ -376,16 +411,16 @@ export class ChargeManagement extends LitElement {
             </div>
 
             <!-- Customer Details -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Doc. Cliente</label>
-                <input
-                  type="text"
-                  placeholder="RUC, DNI, etc."
+                <select
                   class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
                   .value=${this.customer_document_type}
-                  @input=${(e: Event) => (this.customer_document_type = (e.target as HTMLInputElement).value)}
-                />
+                  @change=${(e: Event) => (this.customer_document_type = (e.target as HTMLSelectElement).value)}
+                >
+                  ${CUSTOMER_DOCUMENT_TYPES.map((type) => html`<option value=${type}>${type}</option>`)}
+                </select>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Nº Doc. Cliente</label>
@@ -412,7 +447,7 @@ export class ChargeManagement extends LitElement {
             <!-- Financial Values (Validated Numbers) -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Monto ($)</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Monto</label>
                 <input
                   type="number"
                   step="0.01"
@@ -424,7 +459,7 @@ export class ChargeManagement extends LitElement {
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Con Descuento ($)</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Con Descuento</label>
                 <input
                   type="number"
                   step="0.01"
@@ -436,12 +471,13 @@ export class ChargeManagement extends LitElement {
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Impuesto / IGV ($)</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Impuesto / IGV (%)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
-                  placeholder="0.00"
+                  max="100"
+                  placeholder="19"
                   class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
                   .value=${this.tax}
                   @input=${(e: Event) => (this.tax = (e.target as HTMLInputElement).value ? Number((e.target as HTMLInputElement).value) : '')}
@@ -509,16 +545,6 @@ export class ChargeManagement extends LitElement {
                   class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
                   .value=${this.recipient}
                   @input=${(e: Event) => (this.recipient = (e.target as HTMLInputElement).value)}
-                />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Plantilla</label>
-                <input
-                  type="text"
-                  placeholder="Standard / Premium"
-                  class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
-                  .value=${this.template}
-                  @input=${(e: Event) => (this.template = (e.target as HTMLInputElement).value)}
                 />
               </div>
             </div>
@@ -623,12 +649,12 @@ export class ChargeManagement extends LitElement {
             <div><span class="font-semibold text-slate-500">Documento:</span> <p class="text-slate-800 font-medium">${t.document_type} ${t.document_number}</p></div>
             <div><span class="font-semibold text-slate-500">Cliente:</span> <p class="text-slate-800 font-medium">${t.customer_name || '—'}</p></div>
             <div><span class="font-semibold text-slate-500">Doc Cliente:</span> <p class="text-slate-800">${t.customer_document_type} ${t.customer_document_number}</p></div>
-            <div><span class="font-semibold text-slate-500">Monto Principal:</span> <p class="text-slate-800 font-bold">$${t.amount?.toFixed(2) ?? '0.00'}</p></div>
-            <div><span class="font-semibold text-slate-500">Con Descuento:</span> <p class="text-slate-800">$${t.discounted_amount?.toFixed(2) ?? '0.00'}</p></div>
-            <div><span class="font-semibold text-slate-500">Impuesto:</span> <p class="text-slate-800">$${t.tax?.toFixed(2) ?? '0.00'}</p></div>
+            <div><span class="font-semibold text-slate-500">Monto Principal:</span> <p class="text-slate-800 font-bold">${this.formatCurrency(t.amount)}</p></div>
+            <div><span class="font-semibold text-slate-500">Con Descuento:</span> <p class="text-slate-800">${this.formatCurrency(t.discounted_amount)}</p></div>
+            <div><span class="font-semibold text-slate-500">Impuesto:</span> <p class="text-slate-800">${this.formatPercent(t.tax)}</p></div>
             <div><span class="font-semibold text-slate-500">Estado Entrega:</span> <p class="text-slate-800">${t.delivery_status || '—'}</p></div>
-            <div><span class="font-semibold text-slate-500">F. Vencimiento:</span> <p class="text-slate-800">${t.due_date || '—'}</p></div>
-            <div><span class="font-semibold text-slate-500">F. Envío:</span> <p class="text-slate-800">${t.sent_date || '—'}</p></div>
+            <div><span class="font-semibold text-slate-500">F. Vencimiento:</span> <p class="text-slate-800">${this.formatDate(t.due_date)}</p></div>
+            <div><span class="font-semibold text-slate-500">F. Envío:</span> <p class="text-slate-800">${this.formatDate(t.sent_date)}</p></div>
           </div>
 
           ${t.charge_details ? html`
@@ -730,10 +756,10 @@ export class ChargeManagement extends LitElement {
                                 </div>
                               </td>
                               <td class="h-[60px] px-6">
-                                <span class="font-bold text-[#0F172A]">$${c.amount?.toFixed(2) ?? '0.00'}</span>
+                                <span class="font-bold text-[#0F172A]">${this.formatCurrency(c.amount)}</span>
                               </td>
                               <td class="h-[60px] px-6 text-[#64748B]">
-                                ${c.due_date || '—'}
+                                ${this.formatDate(c.due_date)}
                               </td>
                               <td class="h-[60px] px-6">
                                 <span
