@@ -2,6 +2,7 @@ from fastapi import HTTPException, Query, status
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 from typing import Optional
+from uuid import UUID
 
 from services.charge_service import ChargeService
 from repositories.sqlalchemy_db_manager import SqlAlchemyDatabaseManager
@@ -60,9 +61,9 @@ class ChargeEndpoint:
             return ChargeService(session).find_customers()
 
     @router.get("/charges/{charge_uuid}", response_model=ChargeResponse)
-    def get_charge(self, charge_uuid: str):
+    def get_charge(self, charge_uuid: UUID):
         with SqlAlchemyDatabaseManager.session("primary") as session:
-            charge = ChargeService(session).find_by_id(charge_uuid)
+            charge = ChargeService(session).find_by_id(str(charge_uuid))
             if not charge:
                 raise HTTPException(status_code=404, detail="Cobro no encontrado")
             return charge
@@ -76,10 +77,10 @@ class ChargeEndpoint:
             return created
 
     @router.put("/charges/{charge_uuid}", response_model=ChargeResponse)
-    def update_charge(self, charge_uuid: str, data: ChargeUpdate):
+    def update_charge(self, charge_uuid: UUID, data: ChargeUpdate):
         with SqlAlchemyDatabaseManager.session("primary") as session:
             service = ChargeService(session)
-            charge = service.find_by_id(charge_uuid)
+            charge = service.find_by_id(str(charge_uuid))
             if not charge:
                 raise HTTPException(status_code=404, detail="Cobro no encontrado")
             
@@ -91,10 +92,10 @@ class ChargeEndpoint:
             return updated
 
     @router.delete("/charges/{charge_uuid}", status_code=status.HTTP_204_NO_CONTENT)
-    def delete_charge(self, charge_uuid: str):
+    def delete_charge(self, charge_uuid: UUID):
         with SqlAlchemyDatabaseManager.session("primary") as session:
             service = ChargeService(session)
-            charge = service.find_by_id(charge_uuid)
+            charge = service.find_by_id(str(charge_uuid))
             if not charge:
                 raise HTTPException(status_code=404, detail="Cobro no encontrado")
             service.delete(charge)
