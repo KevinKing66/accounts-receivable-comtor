@@ -82,6 +82,9 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
 
     def _calculate_group(self, charges: List[Charge]) -> dict:
         most_recent_charge = self._most_recent_charge(charges)
+        pending_charges = [
+            charge for charge in charges if self._is_pending_charge(charge)
+        ]
 
         return {
             "customer_key": self._group_key(most_recent_charge) if most_recent_charge else None,
@@ -91,13 +94,16 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
             "customer_name": most_recent_charge.customer_name if most_recent_charge else None,
             "recipient": most_recent_charge.recipient if most_recent_charge else None,
             "most_recent_date": self._most_recent_date(most_recent_charge),
-            "total_charges": len(charges),
-            "total_amount": float(sum(charge.amount or 0 for charge in charges)),
+            "total_charges": len(pending_charges),
+            "total_amount": float(sum(charge.amount or 0 for charge in pending_charges)),
             "total_discounted_amount": float(
-                sum(charge.discounted_amount or 0 for charge in charges)
+                sum(charge.discounted_amount or 0 for charge in pending_charges)
             ),
-            "total_tax": float(sum(charge.tax or 0 for charge in charges)),
+            "total_tax": float(sum(charge.tax or 0 for charge in pending_charges)),
         }
+
+    def _is_pending_charge(self, charge: Charge) -> bool:
+        return str(charge.delivery_status or "").strip().lower() == "pendiente"
 
     def _group_key(self, charge: Optional[Charge]) -> str:
         if charge is None:
