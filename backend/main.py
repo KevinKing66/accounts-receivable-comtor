@@ -18,6 +18,7 @@ from routers.user_router import router as user_router
 from routers.user_write_router import router as user_write_router
 from routers.session_router import router as session_router
 from routers.charge_router import router as charge_router
+from routers.payment_router import router as payment_router
 
 SqlAlchemyDatabaseManager.register("primary", DATABASE_URL)
 
@@ -55,6 +56,7 @@ app.include_router(
 )
 app.include_router(session_router, prefix="/api")
 app.include_router(charge_router, prefix="/api")
+app.include_router(payment_router, prefix="/api")
 
 # The frontend is a static Vite+Lit build. Locally it lives at ../frontend/dist
 # (built via `npm run build`); on Vercel the installCommand copies it into

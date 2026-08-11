@@ -41,6 +41,17 @@ class ChargeService(SQLAlchemyService[Charge]):
         charge = super().find_by(**filters)
         return self._hydrate_optional_attachment(charge)
 
+    def find_raw_by_id(self, id_value) -> Optional[Charge]:
+        return super().find_by_id(id_value)
+
+    def update_delivery_status(self, charge_uuid: str, delivery_status: str) -> Charge:
+        charge = super().find_by_id(charge_uuid)
+        if charge is None:
+            raise ValueError("Charge not found")
+
+        charge.delivery_status = delivery_status
+        return super().update(charge)
+
     def find_page(
         self, page: int, page_size: int, search: Optional[str] = None
     ) -> Tuple[List[Charge], int]:
