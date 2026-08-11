@@ -73,6 +73,37 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
             .all()
         )
 
+    def find_customers(self) -> List[dict]:
+        rows = (
+            self.session.query(
+                self.model.customer_name,
+                self.model.customer_document_type,
+                self.model.customer_document_number,
+            )
+            .filter(
+                or_(
+                    self.model.customer_name.isnot(None),
+                    self.model.customer_document_type.isnot(None),
+                    self.model.customer_document_number.isnot(None),
+                )
+            )
+            .distinct()
+            .order_by(
+                self.model.customer_name.asc(),
+                self.model.customer_document_number.asc(),
+            )
+            .all()
+        )
+
+        return [
+            {
+                "customer_name": customer_name,
+                "customer_document_type": customer_document_type,
+                "customer_document_number": customer_document_number,
+            }
+            for customer_name, customer_document_type, customer_document_number in rows
+        ]
+
     def _customer_filter(self, customer_search: str):
         like = f"%{customer_search.strip()}%"
         return or_(

@@ -52,3 +52,8 @@ class ChargeCalculation(BaseModel):
     total_amount: float
     total_discounted_amount: float
     total_tax: float
+
+class ChargeCustomer(BaseModel):
+    customer_name: Optional[str] = None
+    customer_document_type: Optional[str] = None
+    customer_document_number: Optional[str] = None

@@ -70,6 +70,9 @@ class ChargeService(SQLAlchemyService[Charge]):
         charges = self._repo().find_pending_by_customer(customer_search)
         return [self._hydrate_attachment(charge) for charge in charges]
 
+    def find_customers(self) -> List[dict]:
+        return self._repo().find_customers()
+
     def _save_attachment(self, charge: Charge) -> None:
         attachment = str(charge.attachment_base64 or "")
         if not attachment or not attachment.startswith("data:"):

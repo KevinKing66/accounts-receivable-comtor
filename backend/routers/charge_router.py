@@ -7,6 +7,7 @@ from services.charge_service import ChargeService
 from repositories.sqlalchemy_db_manager import SqlAlchemyDatabaseManager
 from dto.charge_dto import (
     ChargeCalculation,
+    ChargeCustomer,
     ChargePage,
     ChargeResponse,
     ChargeCreate,
@@ -52,6 +53,11 @@ class ChargeEndpoint:
     ):
         with SqlAlchemyDatabaseManager.session("primary") as session:
             return ChargeService(session).find_pending_by_customer(customer_search)
+
+    @router.get("/charges/customers", response_model=list[ChargeCustomer])
+    def get_charge_customers(self):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            return ChargeService(session).find_customers()
 
     @router.get("/charges/{charge_uuid}", response_model=ChargeResponse)
     def get_charge(self, charge_uuid: str):
