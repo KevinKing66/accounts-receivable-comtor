@@ -43,3 +43,17 @@ class PaymentEndpoint:
     def get_payments_by_charge(self, charge_uuid: str):
         with SqlAlchemyDatabaseManager.session("primary") as session:
             return PaymentService(session).find_by_charge(charge_uuid)
+
+    @router.get("/payments/balance/charge/{charge_uuid}")
+    def get_charge_balance(self, charge_uuid: str):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            try:
+                return PaymentService(session).get_charge_balance(charge_uuid)
+            except ChargeNotFoundError as err:
+                raise HTTPException(status_code=404, detail=str(err))
+
+    @router.get("/payments/balance/customer/{customer_search}")
+    def get_customer_balance(self, customer_search: str):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            return PaymentService(session).get_customer_balance(customer_search)
+

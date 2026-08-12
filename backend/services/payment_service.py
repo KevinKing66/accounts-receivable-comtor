@@ -233,6 +233,65 @@ class PaymentService(SQLAlchemyService[Payment]):
             if not attachment or attachment.startswith("data:")
             else attachment
         )
-        payment.attachment_base64 = self.vfs_service.find_as_data_uri(vfs_uuid)
-        return payment
+    def get_charge_balance(self, charge_uuid: str) -> dict:
+        charge = self.charge_service.find_by_id(charge_uuid)
+        if charge is None:
+            raise ChargeNotFoundError("Cuenta de cobro no encontrada")
+
+        charge_amount = float(charge.amount or 0)
+        paid_amount = self._repo().sum_by_charge(charge_uuid)
+        pending_amount = max(charge_amount - paid_amount, 0)
+        payments = self.find_by_charge(charge_uuid)
+
+        return {
+            "charge_uuid": charge_uuid,
+            "document_number": charge.document_number,
+            "customer_name": charge.customer_name,
+            "customer_document_number": charge.customer_document_number,
+            "charge_amount": charge_amount,
+            "paid_amount": paid_amount,
+            "pending_amount": pending_amount,
+            "delivery_status": charge.delivery_status,
+            "payments_count": len(payments),
+            "payments": payments,
+        }
+
+    def get_customer_balance(self, customer_search: str) -> dict:
+        charges = self.charge_service._repo().session.query(self.charge_service.model).filter(
+            self.charge_service._repo()._customer_filter(customer_search)
+        ).all()
+
+        total_charge_amount = 0.0
+        total_paid_amount = 0.0
+        total_pending_amount = 0.0
+        charges_breakdown = []
+
+        for charge in charges:
+            c_amount = float(charge.amount or 0)
+            c_paid = self._repo().sum_by_charge(str(charge.uuid))
+            c_pending = max(c_amount - c_paid, 0)
+
+            total_charge_amount += c_amount
+            total_paid_amount += c_paid
+            total_pending_amount += c_pending
+
+            charges_breakdown.append({
+                "charge_uuid": str(charge.uuid),
+                "document_number": charge.document_number,
+                "due_date": charge.due_date,
+                "charge_amount": c_amount,
+                "paid_amount": c_paid,
+                "pending_amount": c_pending,
+                "delivery_status": charge.delivery_status,
+            })
+
+        return {
+            "customer_search": customer_search,
+            "total_charge_amount": total_charge_amount,
+            "total_paid_amount": total_paid_amount,
+            "total_pending_amount": total_pending_amount,
+            "total_charges": len(charges),
+            "charges": charges_breakdown,
+        }
+
 
