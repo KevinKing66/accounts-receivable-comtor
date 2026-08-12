@@ -55,9 +55,13 @@ class ChargeCalculation(BaseModel):
     recipient: Optional[str] = None
     most_recent_date: Optional[date] = None
     total_charges: int
+    total_charge_amount: Optional[float] = 0.0
     total_amount: float
+    total_paid_amount: float = 0.0
+    total_pending_amount: float = 0.0
     total_discounted_amount: float
     total_tax: float
+    charges: Optional[List[dict]] = None
 
 class ChargeCustomer(BaseModel):
     customer_name: Optional[str] = None

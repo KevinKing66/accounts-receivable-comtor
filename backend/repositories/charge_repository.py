@@ -115,10 +115,37 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
         )
 
     def _calculate_group(self, charges: List[Charge]) -> dict:
+        from repositories.payment_repository import PaymentRepository
+        payment_repo = PaymentRepository(self.session)
+
         most_recent_charge = self._most_recent_charge(charges)
         pending_charges = [
             charge for charge in charges if self._is_pending_charge(charge)
         ]
+
+        total_amount = 0.0
+        total_paid_amount = 0.0
+        total_pending_amount = 0.0
+        charges_breakdown = []
+
+        for charge in pending_charges:
+            c_amount = float(charge.amount or 0)
+            c_paid = payment_repo.sum_by_charge(str(charge.uuid))
+            c_pending = max(c_amount - c_paid, 0)
+
+            total_amount += c_amount
+            total_paid_amount += c_paid
+            total_pending_amount += c_pending
+
+            charges_breakdown.append({
+                "charge_uuid": str(charge.uuid),
+                "document_number": charge.document_number,
+                "due_date": charge.due_date,
+                "charge_amount": c_amount,
+                "paid_amount": c_paid,
+                "pending_amount": c_pending,
+                "delivery_status": charge.delivery_status,
+            })
 
         return {
             "customer_key": self._group_key(most_recent_charge) if most_recent_charge else None,
@@ -129,15 +156,19 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
             "recipient": most_recent_charge.recipient if most_recent_charge else None,
             "most_recent_date": self._most_recent_date(most_recent_charge),
             "total_charges": len(pending_charges),
-            "total_amount": float(sum(charge.amount or 0 for charge in pending_charges)),
+            "total_charge_amount": float(total_amount),
+            "total_amount": float(total_amount),
+            "total_paid_amount": float(total_paid_amount),
+            "total_pending_amount": float(total_pending_amount),
             "total_discounted_amount": float(
                 sum(charge.discounted_amount or 0 for charge in pending_charges)
             ),
             "total_tax": float(sum(charge.tax or 0 for charge in pending_charges)),
+            "charges": charges_breakdown,
         }
 
     def _is_pending_charge(self, charge: Charge) -> bool:
-        return str(charge.delivery_status or "").strip().lower() == "pendiente"
+        return str(charge.delivery_status or "").strip().lower() != "pagado"
 
     def _group_key(self, charge: Optional[Charge]) -> str:
         if charge is None:
