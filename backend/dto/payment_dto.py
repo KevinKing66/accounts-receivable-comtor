@@ -5,7 +5,8 @@ from pydantic import BaseModel, Field
 
 
 class PaymentCreate(BaseModel):
-    charge_uuid: str
+    charge_uuid: Optional[str] = None
+    customer_search: Optional[str] = None
     amount: float = Field(..., gt=0)
     payment_date: Optional[date] = None
     method: Optional[str] = None
@@ -30,9 +31,15 @@ class PaymentResponse(BaseModel):
 
 
 class PaymentProcessResponse(BaseModel):
-    payment: PaymentResponse
-    charge_uuid: str
-    charge_amount: float
-    paid_amount: float
-    pending_amount: float
-    payment_status: str
+    payment: Optional[PaymentResponse] = None
+    charge_uuid: Optional[str] = None
+    charge_amount: Optional[float] = None
+    paid_amount: Optional[float] = None
+    pending_amount: Optional[float] = None
+    payment_status: Optional[str] = None
+    total_payment_amount: Optional[float] = None
+    applied_amount: Optional[float] = None
+    unused_amount: Optional[float] = None
+    applied_payments_count: Optional[int] = None
+    details: Optional[list] = None
+

@@ -23,8 +23,9 @@ class PaymentEndpoint:
     def process_payment(self, data: PaymentCreate):
         with SqlAlchemyDatabaseManager.session("primary") as session:
             try:
-                return PaymentService(session).process_payment(
+                return PaymentService(session).process_payment_cascading(
                     charge_uuid=data.charge_uuid,
+                    customer_search=data.customer_search,
                     amount=data.amount,
                     payment_date=data.payment_date,
                     method=data.method,
@@ -36,6 +37,7 @@ class PaymentEndpoint:
                 raise HTTPException(status_code=404, detail=str(err))
             except PaymentAmountError as err:
                 raise HTTPException(status_code=400, detail=str(err))
+
 
     @router.get("/payments/charge/{charge_uuid}", response_model=list[PaymentResponse])
     def get_payments_by_charge(self, charge_uuid: str):

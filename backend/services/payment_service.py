@@ -86,6 +86,104 @@ class PaymentService(SQLAlchemyService[Payment]):
             "payment_status": payment_status,
         }
 
+    def process_payment_cascading( self,
+        charge_uuid: str | None = None,
+        customer_search: str | None = None,
+        amount: float = 0,
+        payment_date: date | None = None,
+        method: str | None = None,
+        reference: str | None = None,
+        notes: str | None = None,
+        attachment_base64: str | None = None,
+    ) -> dict:
+        if amount <= 0:
+            raise PaymentAmountError("El monto del pago debe ser mayor a cero")
+
+        # 1. Obtener la lista de facturas a pagar
+        charges_to_process = []
+        if charge_uuid:
+            initial_charge = self.charge_service.find_by_id(charge_uuid)
+            if initial_charge is None:
+                raise ChargeNotFoundError("Cuenta de cobro no encontrada")
+            
+            # Buscar otras facturas pendientes del mismo cliente si el dinero alcanza
+            customer_ref = initial_charge.customer_document_number or initial_charge.customer_name
+            if customer_ref:
+                charges_to_process = self.charge_service.find_pending_by_customer(customer_ref)
+            
+            # Si la factura inicial no está en la lista (p.ej. estado no "Pendiente"), incluirla de primera
+            if not any(c.uuid == charge_uuid for c in charges_to_process):
+                charges_to_process.insert(0, initial_charge)
+            else:
+                # Asegurar que la factura inicial sea la primera en procesar
+                charges_to_process.sort(key=lambda c: 0 if c.uuid == charge_uuid else 1)
+        elif customer_search:
+            charges_to_process = self.charge_service.find_pending_by_customer(customer_search)
+        else:
+            raise ChargeNotFoundError("Se requiere un charge_uuid o customer_search")
+
+        if not charges_to_process:
+            raise ChargeNotFoundError("No hay facturas pendientes para aplicar el pago")
+
+        remaining_payment = amount
+        applied_payments = []
+
+        for charge in charges_to_process:
+            if remaining_payment <= 0:
+                break
+
+            charge_amount = float(charge.amount or 0)
+            paid_before = self._repo().sum_by_charge(str(charge.uuid))
+            pending_before = max(charge_amount - paid_before, 0)
+
+            if pending_before <= 0:
+                continue
+
+            # Monto a abonar a esta factura en particular
+            payment_for_charge = min(remaining_payment, pending_before)
+
+            payment_entity = Payment(
+                uuid=str(uuid.uuid4()),
+                charge_uuid=str(charge.uuid),
+                amount=payment_for_charge,
+                payment_date=payment_date or date.today(),
+                method=method,
+                reference=reference,
+                notes=notes,
+                attachment_base64=attachment_base64,
+            )
+
+            payment = self.create(payment_entity)
+
+            paid_amount = paid_before + payment_for_charge
+            pending_amount = max(charge_amount - paid_amount, 0)
+            payment_status = self.PAID_STATUS if pending_amount == 0 else self.PARTIAL_STATUS
+
+            charge.delivery_status = payment_status
+            self.charge_service.update(charge)
+
+            remaining_payment -= payment_for_charge
+
+            applied_payments.append({
+                "payment_uuid": payment.uuid,
+                "charge_uuid": str(charge.uuid),
+                "document_number": charge.document_number,
+                "charge_amount": charge_amount,
+                "applied_amount": payment_for_charge,
+                "paid_amount": paid_amount,
+                "pending_amount": pending_amount,
+                "payment_status": payment_status,
+            })
+
+        return {
+            "total_payment_amount": amount,
+            "applied_amount": amount - remaining_payment,
+            "unused_amount": remaining_payment,
+            "applied_payments_count": len(applied_payments),
+            "details": applied_payments,
+        }
+
+
     def create(self, payment: Payment) -> Payment:
         if not payment.uuid:
             payment.uuid = str(uuid.uuid4())
