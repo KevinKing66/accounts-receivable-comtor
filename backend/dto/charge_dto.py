@@ -1,6 +1,6 @@
 from typing import Optional, List, Tuple
 from datetime import date
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class ChargeBase(BaseModel):
     document_type: Optional[str] = None
@@ -21,6 +21,13 @@ class ChargeBase(BaseModel):
     is_read: Optional[int] = Field(0, ge=0, le=1)
     attachment_base64: Optional[str] = None
     recipient: Optional[str] = None
+
+    @field_validator("tax")
+    @classmethod
+    def tax_must_be_whole_percent(cls, value):
+        if value is not None and value % 1 != 0:
+            raise ValueError("tax must be a whole percentage")
+        return value
 
 class ChargeCreate(ChargeBase):
     pass

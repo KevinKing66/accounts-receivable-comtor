@@ -43,7 +43,7 @@ const currencyFormatter = new Intl.NumberFormat('es-CO', {
 const percentFormatter = new Intl.NumberFormat('es-CO', {
   style: 'percent',
   minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
+  maximumFractionDigits: 0,
 })
 
 const dateFormatter = new Intl.DateTimeFormat('es-CO', {
@@ -295,8 +295,11 @@ export class ChargeManagement extends LitElement {
       this.formError = 'El monto con descuento debe ser un número mayor o igual a 0.'
       return false
     }
-    if (this.tax !== '' && (Number(this.tax) < 0 || Number(this.tax) > 100 || isNaN(Number(this.tax)))) {
-      this.formError = 'El impuesto debe ser un porcentaje entre 0 y 100.'
+    if (
+      this.tax !== '' &&
+      (Number(this.tax) < 0 || Number(this.tax) > 100 || !Number.isInteger(Number(this.tax)) || isNaN(Number(this.tax)))
+    ) {
+      this.formError = 'El impuesto debe ser un porcentaje entero entre 0 y 100.'
       return false
     }
     return true
@@ -474,7 +477,7 @@ export class ChargeManagement extends LitElement {
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Impuestos (%)</label>
                 <input
                   type="number"
-                  step="0.01"
+                  step="1"
                   min="0"
                   max="100"
                   placeholder="19"
