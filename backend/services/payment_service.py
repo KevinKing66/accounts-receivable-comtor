@@ -220,7 +220,7 @@ class PaymentService(SQLAlchemyService[Payment]):
         }
 
     def get_customer_balance(self, customer_search: str) -> dict:
-        charges = self.charge_service._repo().session.query(self.charge_service.model).filter(
+        charges = self.charge_service._repo().session.query(self.charge_service._model).filter(
             self.charge_service._repo()._customer_filter(customer_search)
         ).all()
 
