@@ -67,7 +67,10 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
             self.session.query(self.model)
             .filter(
                 self._customer_filter(customer_search),
-                func.lower(self.model.delivery_status) == "pendiente",
+                or_(
+                    self.model.delivery_status.is_(None),
+                    func.lower(self.model.delivery_status) != "pagado",
+                ),
             )
             .order_by(self.model.due_date.asc(), self.model.uuid.desc())
             .all()

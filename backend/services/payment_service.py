@@ -88,9 +88,6 @@ class PaymentService(SQLAlchemyService[Payment]):
             raise ChargeNotFoundError("No se encontró ninguna cuenta de cobro pendiente para procesar el pago")
 
 
-        if not charges_to_process:
-            raise ChargeNotFoundError("No hay facturas pendientes para aplicar el pago")
-
         remaining_payment = amount
         applied_payments = []
 
@@ -119,7 +116,8 @@ class PaymentService(SQLAlchemyService[Payment]):
                 attachment_base64=attachment_base64,
             )
 
-            payment = self.create(payment_entity)
+            created_payment = self.create(payment_entity)
+            payment = created_payment if created_payment is not None else payment_entity
 
             paid_amount = paid_before + payment_for_charge
             pending_amount = max(charge_amount - paid_amount, 0)
