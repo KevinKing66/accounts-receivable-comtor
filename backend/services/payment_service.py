@@ -36,55 +36,24 @@ class PaymentService(SQLAlchemyService[Payment]):
 
     def process_payment(
         self,
-        charge_uuid: str,
-        amount: float,
+        charge_uuid: str | None = None,
+        amount: float = 0,
         payment_date: date | None = None,
         method: str | None = None,
         reference: str | None = None,
         notes: str | None = None,
         attachment_base64: str | None = None,
     ) -> dict:
-        charge = self.charge_service.find_by_id(charge_uuid)
-        if charge is None:
-            raise ChargeNotFoundError("Cuenta de cobro no encontrada")
-
-        charge_amount = float(charge.amount or 0)
-        paid_before = self._repo().sum_by_charge(charge_uuid)
-        pending_before = max(charge_amount - paid_before, 0)
-
-        if amount <= 0:
-            raise PaymentAmountError("El monto del pago debe ser mayor a cero")
-        if amount > pending_before:
-            raise PaymentAmountError("El pago supera el saldo pendiente")
-
-        payment_entity = Payment(
-            uuid=str(uuid.uuid4()),
+        return self.process_payment_cascading(
             charge_uuid=charge_uuid,
             amount=amount,
-            payment_date=payment_date or date.today(),
+            payment_date=payment_date,
             method=method,
             reference=reference,
             notes=notes,
             attachment_base64=attachment_base64,
         )
 
-        payment = self.create(payment_entity)
-
-        paid_amount = paid_before + amount
-        pending_amount = max(charge_amount - paid_amount, 0)
-        payment_status = self.PAID_STATUS if pending_amount == 0 else self.PARTIAL_STATUS
-
-        charge.delivery_status = payment_status
-        self.charge_service.update(charge)
-
-        return {
-            "payment": payment,
-            "charge_uuid": charge_uuid,
-            "charge_amount": charge_amount,
-            "paid_amount": paid_amount,
-            "pending_amount": pending_amount,
-            "payment_status": payment_status,
-        }
 
     def process_payment_cascading( self,
         charge_uuid: str | None = None,
@@ -103,24 +72,21 @@ class PaymentService(SQLAlchemyService[Payment]):
         charges_to_process = []
         if charge_uuid:
             initial_charge = self.charge_service.find_by_id(charge_uuid)
-            if initial_charge is None:
-                raise ChargeNotFoundError("Cuenta de cobro no encontrada")
-            
-            # Buscar otras facturas pendientes del mismo cliente si el dinero alcanza
-            customer_ref = initial_charge.customer_document_number or initial_charge.customer_name
-            if customer_ref:
-                charges_to_process = self.charge_service.find_pending_by_customer(customer_ref)
-            
-            # Si la factura inicial no está en la lista (p.ej. estado no "Pendiente"), incluirla de primera
-            if not any(c.uuid == charge_uuid for c in charges_to_process):
-                charges_to_process.insert(0, initial_charge)
-            else:
-                # Asegurar que la factura inicial sea la primera en procesar
-                charges_to_process.sort(key=lambda c: 0 if c.uuid == charge_uuid else 1)
-        elif customer_search:
+            if initial_charge:
+                customer_ref = initial_charge.customer_document_number or initial_charge.customer_name
+                if customer_ref:
+                    charges_to_process = self.charge_service.find_pending_by_customer(customer_ref)
+                if not any(c.uuid == charge_uuid for c in charges_to_process):
+                    charges_to_process.insert(0, initial_charge)
+                else:
+                    charges_to_process.sort(key=lambda c: 0 if c.uuid == charge_uuid else 1)
+        
+        if not charges_to_process and customer_search:
             charges_to_process = self.charge_service.find_pending_by_customer(customer_search)
-        else:
-            raise ChargeNotFoundError("Se requiere un charge_uuid o customer_search")
+
+        if not charges_to_process:
+            raise ChargeNotFoundError("No se encontró ninguna cuenta de cobro pendiente para procesar el pago")
+
 
         if not charges_to_process:
             raise ChargeNotFoundError("No hay facturas pendientes para aplicar el pago")
@@ -166,7 +132,6 @@ class PaymentService(SQLAlchemyService[Payment]):
 
             applied_payments.append({
                 "payment_uuid": payment.uuid,
-                "charge_uuid": str(charge.uuid),
                 "document_number": charge.document_number,
                 "charge_amount": charge_amount,
                 "applied_amount": payment_for_charge,
