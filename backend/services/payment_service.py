@@ -2,6 +2,8 @@ from datetime import date
 from typing import Optional
 import uuid
 
+from sqlalchemy.orm.attributes import set_committed_value
+
 from models.entities.payment import Payment
 from repositories.payment_repository import PaymentRepository
 from services.charge_service import ChargeService
@@ -198,9 +200,9 @@ class PaymentService(SQLAlchemyService[Payment]):
             else attachment
         )
         if attachment and not attachment.startswith("data:"):
-            attachment_data = self.vfs_service.find_base64_v2(vfs_uuid)
+            attachment_data = self.vfs_service.find_as_data_uri(vfs_uuid)
             if attachment_data:
-                payment.attachment_base64 = attachment_data
+                set_committed_value(payment, "attachment_base64", attachment_data)
         return payment
 
     def _to_detailed_dict(self, payment: Payment, charge = None) -> dict:
@@ -347,5 +349,3 @@ class PaymentService(SQLAlchemyService[Payment]):
             "total_charges": len(charges),
             "charges": charges_breakdown,
         }
-
-
