@@ -60,6 +60,13 @@ interface ChargePageResponse {
   page_size: number
 }
 
+interface ChargeBalance {
+  charge_uuid: string
+  charge_amount: number
+  paid_amount: number
+  pending_amount: number
+}
+
 type Modal = 'none' | 'create' | 'edit' | 'delete' | 'details'
 
 export class ChargeManagement extends LitElement {
@@ -74,6 +81,9 @@ export class ChargeManagement extends LitElement {
     target: { type: Object },
     submitting: { type: Boolean },
     formError: { type: String },
+    balance: { type: Object },
+    balanceLoading: { type: Boolean },
+    balanceError: { type: String },
 
     // Form fields
     document_type: { type: String },
@@ -107,6 +117,9 @@ export class ChargeManagement extends LitElement {
   declare target: ChargeRecord | null
   declare submitting: boolean
   declare formError: string
+  declare balance: ChargeBalance | null
+  declare balanceLoading: boolean
+  declare balanceError: string
 
   declare document_type: string
   declare document_number: string
@@ -142,6 +155,9 @@ export class ChargeManagement extends LitElement {
     this.target = null
     this.submitting = false
     this.formError = ''
+    this.balance = null
+    this.balanceLoading = false
+    this.balanceError = ''
 
     this.resetForm()
   }
@@ -260,9 +276,12 @@ export class ChargeManagement extends LitElement {
     this.modal = 'edit'
   }
 
-  private openDetails(charge: ChargeRecord) {
+  private async openDetails(charge: ChargeRecord) {
     this.target = charge
+    this.balance = null
+    this.balanceError = ''
     this.modal = 'details'
+    await this.loadChargeBalance(charge.uuid)
   }
 
   private openDelete(charge: ChargeRecord) {
@@ -273,6 +292,21 @@ export class ChargeManagement extends LitElement {
   private closeModal() {
     this.modal = 'none'
     this.target = null
+    this.balance = null
+    this.balanceError = ''
+  }
+
+  private async loadChargeBalance(chargeUuid: string) {
+    this.balanceLoading = true
+    try {
+      this.balance = (await apiClient.get(
+        `/payments/balance/charge/${encodeURIComponent(chargeUuid)}`
+      )) as ChargeBalance
+    } catch (err) {
+      this.balanceError = 'No se pudo cargar el balance de la factura.'
+    } finally {
+      this.balanceLoading = false
+    }
   }
 
   private handleFileUpload(e: Event) {
@@ -656,6 +690,8 @@ export class ChargeManagement extends LitElement {
   private renderDetailsModal() {
     if (!this.target) return nothing
     const t = this.target
+    const paidAmount = this.balance?.paid_amount ?? 0
+    const pendingAmount = this.balance?.pending_amount ?? Number(t.amount ?? 0)
     return html`
       <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
         <div class="card bg-white p-6 rounded-2xl shadow-xl w-full max-w-lg space-y-4">
@@ -678,6 +714,30 @@ export class ChargeManagement extends LitElement {
             <div><span class="font-semibold text-slate-500">Estado Entrega:</span> <p class="text-slate-800 font-medium">${t.delivery_status || 'pendiente de enviar'}</p></div>
             <div><span class="font-semibold text-slate-500">F. Vencimiento:</span> <p class="text-slate-800">${this.formatDate(t.due_date)}</p></div>
             <div><span class="font-semibold text-slate-500">F. Envío:</span> <p class="text-slate-800">${this.formatDate(t.sent_date)}</p></div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-3">
+            <span class="font-semibold text-xs text-slate-500 block mb-2">Balance:</span>
+            ${this.balanceLoading
+              ? html`<p class="text-xs text-slate-500">Cargando balance...</p>`
+              : this.balanceError
+              ? html`<p class="text-xs text-red-600">${this.balanceError}</p>`
+              : html`
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                      <span class="block text-[11px] font-semibold text-slate-500">Total factura</span>
+                      <p class="text-sm font-bold text-slate-900">${this.formatCurrency(this.balance?.charge_amount ?? t.amount)}</p>
+                    </div>
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+                      <span class="block text-[11px] font-semibold text-emerald-700">Pagado</span>
+                      <p class="text-sm font-bold text-emerald-700">${this.formatCurrency(paidAmount)}</p>
+                    </div>
+                    <div class="rounded-xl border border-amber-100 bg-amber-50 p-3">
+                      <span class="block text-[11px] font-semibold text-amber-700">Pendiente</span>
+                      <p class="text-sm font-bold text-amber-700">${this.formatCurrency(pendingAmount)}</p>
+                    </div>
+                  </div>
+                `}
           </div>
 
           ${t.charge_details ? html`
