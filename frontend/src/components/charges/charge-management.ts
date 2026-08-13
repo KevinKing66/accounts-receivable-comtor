@@ -65,6 +65,14 @@ interface ChargeBalance {
   charge_amount: number
   paid_amount: number
   pending_amount: number
+  payments?: Array<{
+    uuid: string
+    amount: number
+    payment_date: string
+    method?: string
+    reference?: string
+    status?: string
+  }>
 }
 
 type Modal = 'none' | 'create' | 'edit' | 'delete' | 'details'
@@ -702,7 +710,7 @@ export class ChargeManagement extends LitElement {
             </button>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-1 text-xs">
             <div><span class="font-semibold text-slate-500">UUID:</span> <p class="text-slate-800 font-mono select-all truncate">${t.uuid}</p></div>
             <div><span class="font-semibold text-slate-500">Documento:</span> <p class="text-slate-800 font-medium">${t.document_type} ${t.document_number}</p></div>
             <div><span class="font-semibold text-slate-500">Cliente:</span> <p class="text-slate-800 font-medium">${t.customer_name || '—'}</p></div>
@@ -717,13 +725,13 @@ export class ChargeManagement extends LitElement {
           </div>
 
           <div class="border-t border-slate-100 pt-3">
-            <span class="font-semibold text-xs text-slate-500 block mb-2">Balance:</span>
+            <span class="font-semibold text-xs text-slate-500 block mb-2">Balance y Pagos Registrados:</span>
             ${this.balanceLoading
-              ? html`<p class="text-xs text-slate-500">Cargando balance...</p>`
-              : this.balanceError
-              ? html`<p class="text-xs text-red-600">${this.balanceError}</p>`
-              : html`
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        ? html`<p class="text-xs text-slate-500">Cargando balance...</p>`
+        : this.balanceError
+          ? html`<p class="text-xs text-red-600">${this.balanceError}</p>`
+          : html`
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                     <div class="rounded-xl border border-slate-100 bg-slate-50 p-3">
                       <span class="block text-[11px] font-semibold text-slate-500">Total factura</span>
                       <p class="text-sm font-bold text-slate-900">${this.formatCurrency(this.balance?.charge_amount ?? t.amount)}</p>
@@ -737,6 +745,34 @@ export class ChargeManagement extends LitElement {
                       <p class="text-sm font-bold text-amber-700">${this.formatCurrency(pendingAmount)}</p>
                     </div>
                   </div>
+
+                  ${this.balance?.payments && this.balance.payments.length > 0
+              ? html`
+                        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs space-y-2">
+                          <span class="font-semibold text-slate-700 block">Historial de Pagos y Validación:</span>
+                          <div class="space-y-1.5">
+                            ${this.balance.payments.map(
+                (p: any) => html`
+                                <div class="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200/80">
+                                  <div>
+                                    <span class="font-bold text-emerald-700">${this.formatCurrency(p.amount)}</span>
+                                    <span class="text-[11px] text-slate-500 ml-2">(${this.formatDate(p.payment_date)})</span>
+                                    ${p.reference ? html`<span class="text-[11px] text-slate-400 font-mono ml-1">Ref: ${p.reference}</span>` : ''}
+                                  </div>
+                                  <div>
+                                    ${(p.status || 'pendiente') === 'aprobado'
+                    ? html`<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">Pago Aprobado</span>`
+                    : (p.status || 'pendiente') === 'rechazado'
+                      ? html`<span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold">Pago Rechazado</span>`
+                      : html`<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">Pago Pendiente</span>`}
+                                  </div>
+                                </div>
+                              `
+              )}
+                          </div>
+                        </div>
+                      `
+              : html`<p class="text-xs text-slate-400">No hay pagos registrados para esta factura.</p>`}
                 `}
           </div>
 
@@ -750,9 +786,9 @@ export class ChargeManagement extends LitElement {
           ${t.attachment_base64 ? html`
             <div class="border-t border-slate-100 pt-3">
               <span class="font-semibold text-xs text-slate-500 block mb-2">Adjunto:</span>
-              ${t.attachment_base64.startsWith('data:image') 
-                ? html`<img src=${t.attachment_base64} class="max-h-48 rounded-lg border border-slate-200 object-contain mx-auto" />`
-                : html`<a href=${t.attachment_base64} download="adjunto" class="text-xs text-blue-600 underline">Descargar archivo adjunto</a>`}
+              ${t.attachment_base64.startsWith('data:image')
+          ? html`<img src=${t.attachment_base64} class="max-h-48 rounded-lg border border-slate-200 object-contain mx-auto" />`
+          : html`<a href=${t.attachment_base64} download="adjunto" class="text-xs text-blue-600 underline">Descargar archivo adjunto</a>`}
             </div>
           ` : ''}
 
@@ -786,7 +822,7 @@ export class ChargeManagement extends LitElement {
             </div>
             <div class="flex items-center gap-3">
               <button
-                class="flex h-12 items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-5 text-sm font-semibold text-[#0F172A] transition-colors duration-150 ease-out hover:bg-[#EFF6FF]"
+                class="flex h-12 items-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-5 text-sm font-semibold text-[#0F172A] transition-colors duration-150 ease-out hover:bg-[#EFF6FF]"
                 @click=${this.loadCharges}
               >
                 <lucide-icon name="refresh-cw"></lucide-icon>
@@ -805,8 +841,8 @@ export class ChargeManagement extends LitElement {
           ${this.error ? html`<p class="text-sm text-red-600">${this.error}</p>` : ''}
 
           ${this.loading
-            ? html`<p class="text-sm text-[#64748B]">Cargando cobros...</p>`
-            : html`
+        ? html`<p class="text-sm text-[#64748B]">Cargando cobros...</p>`
+        : html`
                 <div class="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
                   <div class="overflow-x-auto">
                     <table class="w-full border-collapse text-left text-sm">
@@ -823,7 +859,7 @@ export class ChargeManagement extends LitElement {
                       </thead>
                       <tbody>
                         ${this.charges.map(
-                          (c) => html`
+          (c) => html`
                             <tr
                               class="border-t border-[#F1F5F9] transition-colors duration-150 ease-out hover:bg-[#EFF6FF]"
                             >
@@ -847,13 +883,12 @@ export class ChargeManagement extends LitElement {
                               </td>
                               <td class="h-[60px] px-6">
                                 <span
-                                  class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
-                                    c.status === 'paga'
-                                      ? 'bg-[#ECFDF5] text-[#059669]'
-                                      : c.status === 'pago parcial'
-                                      ? 'bg-blue-50 text-blue-700'
-                                      : 'bg-[#FFFBEB] text-[#D97706]'
-                                  }"
+                                  class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize ${c.status === 'paga'
+              ? 'bg-[#ECFDF5] text-[#059669]'
+              : c.status === 'pago parcial'
+                ? 'bg-blue-50 text-blue-700'
+                : 'bg-[#FFFBEB] text-[#D97706]'
+            }"
                                 >
                                   ${c.status || 'pendiente'}
                                 </span>
@@ -892,14 +927,14 @@ export class ChargeManagement extends LitElement {
                               </td>
                             </tr>
                           `
-                        )}
+        )}
                         ${this.charges.length === 0
-                          ? html`<tr>
+            ? html`<tr>
                               <td class="px-6 py-12 text-center text-sm text-[#64748B]" colspan="6">
                                 No se encontraron cobros registrados.
                               </td>
                             </tr>`
-                          : ''}
+            : ''}
                       </tbody>
                     </table>
                   </div>
