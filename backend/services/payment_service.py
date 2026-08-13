@@ -22,8 +22,8 @@ class PaymentAmountError(PaymentError):
 
 
 class PaymentService(SQLAlchemyService[Payment]):
-    PAID_STATUS = "Pagado"
-    PARTIAL_STATUS = "Pago parcial"
+    PAID_STATUS = "paga"
+    PARTIAL_STATUS = "pago parcial"
 
     def __init__(self, session):
         super().__init__(
@@ -123,7 +123,7 @@ class PaymentService(SQLAlchemyService[Payment]):
             pending_amount = max(charge_amount - paid_amount, 0)
             payment_status = self.PAID_STATUS if pending_amount == 0 else self.PARTIAL_STATUS
 
-            charge.delivery_status = payment_status
+            charge.status = payment_status
             self.charge_service.update(charge)
 
             remaining_payment -= payment_for_charge
@@ -214,6 +214,7 @@ class PaymentService(SQLAlchemyService[Payment]):
             "charge_amount": charge_amount,
             "paid_amount": paid_amount,
             "pending_amount": pending_amount,
+            "status": charge.status,
             "delivery_status": charge.delivery_status,
             "payments_count": len(payments),
             "payments": payments,
@@ -245,6 +246,7 @@ class PaymentService(SQLAlchemyService[Payment]):
                 "charge_amount": c_amount,
                 "paid_amount": c_paid,
                 "pending_amount": c_pending,
+                "status": charge.status,
                 "delivery_status": charge.delivery_status,
             })
 

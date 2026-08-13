@@ -10,7 +10,8 @@ class ChargeBase(BaseModel):
     customer_name: Optional[str] = None
     charge_details: Optional[str] = None
     sent_date: Optional[date] = None
-    delivery_status: Optional[str] = None
+    status: Optional[str] = "pendiente"
+    delivery_status: Optional[str] = "pendiente de enviar"
     scheduled_date: Optional[str] = None
     due_date: Optional[date] = None
     discount_date: Optional[date] = None

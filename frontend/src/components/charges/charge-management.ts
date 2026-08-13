@@ -11,6 +11,7 @@ export interface ChargeRecord {
   customer_name?: string | null
   charge_details?: string | null
   sent_date?: string | null
+  status?: string | null
   delivery_status?: string | null
   scheduled_date?: string | null
   due_date?: string | null
@@ -82,6 +83,7 @@ export class ChargeManagement extends LitElement {
     customer_name: { type: String },
     charge_details: { type: String },
     sent_date: { type: String },
+    status: { type: String },
     delivery_status: { type: String },
     scheduled_date: { type: String },
     due_date: { type: String },
@@ -113,6 +115,7 @@ export class ChargeManagement extends LitElement {
   declare customer_name: string
   declare charge_details: string
   declare sent_date: string
+  declare status: string
   declare delivery_status: string
   declare scheduled_date: string
   declare due_date: string
@@ -160,7 +163,8 @@ export class ChargeManagement extends LitElement {
     this.customer_name = ''
     this.charge_details = ''
     this.sent_date = ''
-    this.delivery_status = 'Pendiente'
+    this.status = 'pendiente'
+    this.delivery_status = 'pendiente de enviar'
     this.scheduled_date = ''
     this.due_date = ''
     this.discount_date = ''
@@ -240,7 +244,8 @@ export class ChargeManagement extends LitElement {
     this.customer_name = charge.customer_name || ''
     this.charge_details = charge.charge_details || ''
     this.sent_date = charge.sent_date || ''
-    this.delivery_status = charge.delivery_status || 'Pendiente'
+    this.status = charge.status || 'pendiente'
+    this.delivery_status = charge.delivery_status || 'pendiente de enviar'
     this.scheduled_date = charge.scheduled_date || ''
     this.due_date = charge.due_date || ''
     this.discount_date = charge.discount_date || ''
@@ -528,17 +533,31 @@ export class ChargeManagement extends LitElement {
               </div>
             </div>
 
-            <!-- Additional Fields -->
+            <!-- Status & Delivery Status Fields -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Estado de Entrega</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Estado de Factura</label>
                 <input
                   type="text"
-                  placeholder="Pendiente, Enviado, etc."
-                  class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none"
-                  .value=${this.delivery_status}
-                  @input=${(e: Event) => (this.delivery_status = (e.target as HTMLInputElement).value)}
+                  disabled
+                  title="El estado de la factura no se modifica manualmente (se calcula automáticamente como pendiente, pago parcial o paga)"
+                  class="h-10 w-full rounded-xl border border-slate-200 bg-slate-100 px-3 text-sm font-medium text-slate-600 cursor-not-allowed"
+                  .value=${this.status || 'pendiente'}
                 />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Estado de Entrega</label>
+                <select
+                  class="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-[#0B3B78] focus:outline-none bg-white"
+                  .value=${this.delivery_status}
+                  @change=${(e: Event) => (this.delivery_status = (e.target as HTMLSelectElement).value)}
+                >
+                  <option value="pendiente de enviar">pendiente de enviar</option>
+                  <option value="enviado">enviado</option>
+                  <option value="cliente manda evidencia del pago">cliente manda evidencia del pago</option>
+                  <option value="El administrador valida">El administrador valida</option>
+                  <option value="El administrador rechaza evidencia">El administrador rechaza evidencia</option>
+                </select>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatario (Whatsapp)</label>
@@ -655,7 +674,8 @@ export class ChargeManagement extends LitElement {
             <div><span class="font-semibold text-slate-500">Monto Principal:</span> <p class="text-slate-800 font-bold">${this.formatCurrency(t.amount)}</p></div>
             <div><span class="font-semibold text-slate-500">Valor Con Descuento:</span> <p class="text-slate-800">${this.formatCurrency(t.discounted_amount)}</p></div>
             <div><span class="font-semibold text-slate-500">Impuesto:</span> <p class="text-slate-800">${this.formatPercent(t.tax)}</p></div>
-            <div><span class="font-semibold text-slate-500">Estado Entrega:</span> <p class="text-slate-800">${t.delivery_status || '—'}</p></div>
+            <div><span class="font-semibold text-slate-500">Estado Factura:</span> <p class="text-slate-800 font-medium capitalize">${t.status || 'pendiente'}</p></div>
+            <div><span class="font-semibold text-slate-500">Estado Entrega:</span> <p class="text-slate-800 font-medium">${t.delivery_status || 'pendiente de enviar'}</p></div>
             <div><span class="font-semibold text-slate-500">F. Vencimiento:</span> <p class="text-slate-800">${this.formatDate(t.due_date)}</p></div>
             <div><span class="font-semibold text-slate-500">F. Envío:</span> <p class="text-slate-800">${this.formatDate(t.sent_date)}</p></div>
           </div>
@@ -736,7 +756,8 @@ export class ChargeManagement extends LitElement {
                           <th class="px-6 py-4 font-semibold text-[#334155]">Cliente</th>
                           <th class="px-6 py-4 font-semibold text-[#334155]">Monto</th>
                           <th class="px-6 py-4 font-semibold text-[#334155]">Vencimiento</th>
-                          <th class="px-6 py-4 font-semibold text-[#334155]">Estado</th>
+                          <th class="px-6 py-4 font-semibold text-[#334155]">Estado Factura</th>
+                          <th class="px-6 py-4 font-semibold text-[#334155]">Estado Entrega</th>
                           <th class="px-6 py-4 font-semibold text-[#334155] text-right">Acciones</th>
                         </tr>
                       </thead>
@@ -766,15 +787,22 @@ export class ChargeManagement extends LitElement {
                               </td>
                               <td class="h-[60px] px-6">
                                 <span
-                                  class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                                    c.delivery_status === 'Entregado'
+                                  class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                                    c.status === 'paga'
                                       ? 'bg-[#ECFDF5] text-[#059669]'
-                                      : c.delivery_status === 'Enviado'
+                                      : c.status === 'pago parcial'
                                       ? 'bg-blue-50 text-blue-700'
                                       : 'bg-[#FFFBEB] text-[#D97706]'
                                   }"
                                 >
-                                  ${c.delivery_status || 'Pendiente'}
+                                  ${c.status || 'pendiente'}
+                                </span>
+                              </td>
+                              <td class="h-[60px] px-6">
+                                <span
+                                  class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                                >
+                                  ${c.delivery_status || 'pendiente de enviar'}
                                 </span>
                               </td>
                               <td class="h-[60px] px-6 text-right">

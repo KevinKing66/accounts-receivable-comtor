@@ -68,8 +68,8 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
             .filter(
                 self._customer_filter(customer_search),
                 or_(
-                    self.model.delivery_status.is_(None),
-                    func.lower(self.model.delivery_status) != "pagado",
+                    self.model.status.is_(None),
+                    func.lower(self.model.status) != "paga",
                 ),
             )
             .order_by(self.model.due_date.asc(), self.model.uuid.desc())
@@ -144,6 +144,7 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
                 "charge_amount": c_amount,
                 "paid_amount": c_paid,
                 "pending_amount": c_pending,
+                "status": charge.status,
                 "delivery_status": charge.delivery_status,
             })
 
@@ -168,7 +169,7 @@ class ChargeRepository(SQLAlchemyRepository[Charge]):
         }
 
     def _is_pending_charge(self, charge: Charge) -> bool:
-        return str(charge.delivery_status or "").strip().lower() != "pagado"
+        return str(charge.status or "").strip().lower() != "paga"
 
     def _group_key(self, charge: Optional[Charge]) -> str:
         if charge is None:
