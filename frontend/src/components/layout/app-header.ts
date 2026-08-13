@@ -257,13 +257,24 @@ export class AppHeader extends LitElement {
       <header
         class="flex h-[72px] shrink-0 items-center justify-between gap-6 border-b border-slate-100 bg-white px-8"
       >
-        <div class="flex min-w-0 flex-col justify-center">
-          <h1 class="truncate text-[17px] font-semibold leading-tight text-[#0F172A]">
-            ${this.pageTitle}
-          </h1>
-          ${this.pageSubtitle
-            ? html`<p class="truncate text-sm text-[#64748B]">${this.pageSubtitle}</p>`
-            : nothing}
+        <div class="flex min-w-0 items-center gap-6">
+          <a
+            href="/"
+            @click=${(e: Event) => this.navigateTo(e, '/')}
+            class="flex shrink-0 items-center gap-2.5 overflow-hidden"
+          >
+            <img src="/aixa-logo.svg" alt="AIXA" class="h-7 w-7 shrink-0" />
+            <span class="text-lg font-bold tracking-tight text-[#0F172A]">AIXA</span>
+          </a>
+
+          <div class="flex min-w-0 flex-col justify-center">
+            <h1 class="truncate text-[17px] font-semibold leading-tight text-[#0F172A]">
+              ${this.pageTitle}
+            </h1>
+            ${this.pageSubtitle
+              ? html`<p class="truncate text-sm text-[#64748B]">${this.pageSubtitle}</p>`
+              : nothing}
+          </div>
         </div>
 
         <div class="flex flex-1 justify-center">${this.renderSearch()}</div>
