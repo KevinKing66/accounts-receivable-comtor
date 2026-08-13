@@ -124,6 +124,7 @@ class PaymentService(SQLAlchemyService[Payment]):
             payment_status = self.PAID_STATUS if pending_amount == 0 else self.PARTIAL_STATUS
 
             charge.status = payment_status
+            charge.delivery_status = "cliente manda evidencia del pago"
             self.charge_service.update(charge)
 
             remaining_payment -= payment_for_charge
