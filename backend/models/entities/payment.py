@@ -14,4 +14,5 @@ class Payment(SQLAlchemyBase):
     reference = Column(String(255), nullable=True)
     notes = Column(String(1024), nullable=True)
     attachment_base64 = Column(String(1024), nullable=True)
+    status = Column(String(64), nullable=True, default="pendiente")
 

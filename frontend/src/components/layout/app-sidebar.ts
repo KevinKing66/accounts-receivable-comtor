@@ -84,6 +84,7 @@ export class AppSidebar extends LitElement {
     return [
       { label: 'Inicio', href: '/', icon: 'home' },
       { label: 'Cobros', href: '/charges', icon: 'receipt', visible: true },
+      { label: 'Pagos', href: '/payments', icon: 'credit-card', visible: true },
       { label: 'Usuarios', href: '/users', icon: 'users', visible: session.can('users.read') },
     ]
   }

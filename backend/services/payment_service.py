@@ -197,6 +197,94 @@ class PaymentService(SQLAlchemyService[Payment]):
             if not attachment or attachment.startswith("data:")
             else attachment
         )
+        if attachment and not attachment.startswith("data:"):
+            attachment_data = self.vfs_service.find_base64_v2(vfs_uuid)
+            if attachment_data:
+                payment.attachment_base64 = attachment_data
+        return payment
+
+    def _to_detailed_dict(self, payment: Payment, charge = None) -> dict:
+        if charge is None and payment.charge_uuid:
+            charge = self.charge_service.find_by_id(payment.charge_uuid)
+
+        return {
+            "uuid": payment.uuid,
+            "charge_uuid": payment.charge_uuid,
+            "amount": payment.amount,
+            "payment_date": payment.payment_date,
+            "method": payment.method,
+            "reference": payment.reference,
+            "notes": payment.notes,
+            "attachment_base64": payment.attachment_base64,
+            "status": payment.status or "pendiente",
+            "document_number": charge.document_number if charge else None,
+            "document_type": charge.document_type if charge else None,
+            "customer_name": charge.customer_name if charge else None,
+            "customer_document_number": charge.customer_document_number if charge else None,
+            "charge_amount": float(charge.amount) if charge and charge.amount is not None else None,
+            "charge_status": charge.status if charge else None,
+        }
+
+    def find_all_paginated(
+        self,
+        sort_by: str = 'fecha',
+        sort_order: str = 'desc',
+        search: Optional[str] = None,
+        status_filter: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 10,
+    ) -> dict:
+        results, total = self._repo().find_all_paginated(
+            sort_by=sort_by,
+            sort_order=sort_order,
+            search=search,
+            status_filter=status_filter,
+            page=page,
+            page_size=page_size,
+        )
+
+        items = []
+        for payment, charge in results:
+            payment = self._hydrate_attachment(payment)
+            items.append(self._to_detailed_dict(payment, charge))
+
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
+
+    def update_payment_status(self, payment_uuid: str, new_status: str) -> dict:
+        payment = self.find_by_id(payment_uuid)
+        if not payment:
+            raise PaymentError(f"Pago con id {payment_uuid} no encontrado")
+
+        payment.status = new_status
+        self.update(payment)
+
+        charge = self.charge_service.find_by_id(payment.charge_uuid)
+        if charge:
+            charge_amount = float(charge.amount or 0)
+            paid_amount = self._repo().sum_by_charge(str(charge.uuid))
+            pending_amount = max(charge_amount - paid_amount, 0)
+
+            if pending_amount == 0 and charge_amount > 0:
+                charge.status = self.PAID_STATUS
+            elif paid_amount > 0:
+                charge.status = self.PARTIAL_STATUS
+            else:
+                charge.status = "pendiente"
+
+            if new_status == "aprobado":
+                charge.delivery_status = "El administrador valida"
+            elif new_status == "rechazado":
+                charge.delivery_status = "El administrador rechaza evidencia"
+
+            self.charge_service.update(charge)
+
+        return self._to_detailed_dict(payment, charge)
+
     def get_charge_balance(self, charge_uuid: str) -> dict:
         charge = self.charge_service.find_by_id(charge_uuid)
         if charge is None:

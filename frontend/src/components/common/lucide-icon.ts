@@ -28,6 +28,15 @@ import iconPencil from 'lucide-static/icons/pencil.svg?raw'
 import iconTrash2 from 'lucide-static/icons/trash-2.svg?raw'
 import iconPaperclip from 'lucide-static/icons/paperclip.svg?raw'
 import iconX from 'lucide-static/icons/x.svg?raw'
+import iconCreditCard from 'lucide-static/icons/credit-card.svg?raw'
+import iconCheckCircle from 'lucide-static/icons/check-circle.svg?raw'
+import iconXCircle from 'lucide-static/icons/x-circle.svg?raw'
+import iconChevronLeft from 'lucide-static/icons/chevron-left.svg?raw'
+import iconChevronRight from 'lucide-static/icons/chevron-right.svg?raw'
+import iconArrowUp from 'lucide-static/icons/arrow-up.svg?raw'
+import iconArrowDown from 'lucide-static/icons/arrow-down.svg?raw'
+import iconAlertCircle from 'lucide-static/icons/alert-circle.svg?raw'
+import iconLoader2 from 'lucide-static/icons/loader-2.svg?raw'
 
 const ICONS = {
   home: iconHome,
@@ -57,6 +66,15 @@ const ICONS = {
   'trash-2': iconTrash2,
   paperclip: iconPaperclip,
   x: iconX,
+  'credit-card': iconCreditCard,
+  'check-circle': iconCheckCircle,
+  'x-circle': iconXCircle,
+  'chevron-left': iconChevronLeft,
+  'chevron-right': iconChevronRight,
+  'arrow-up': iconArrowUp,
+  'arrow-down': iconArrowDown,
+  'alert-circle': iconAlertCircle,
+  'loader-2': iconLoader2,
 } satisfies Record<string, string>
 
 export type LucideIconName = keyof typeof ICONS

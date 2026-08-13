@@ -26,14 +26,16 @@ SqlAlchemyDatabaseManager.register("primary", DATABASE_URL)
 engine = SqlAlchemyDatabaseManager.get_engine("primary")
 SQLAlchemyBase.metadata.create_all(engine)
 
-# Asegurar que la columna attachment_base64 exista en la tabla payments en la BD PostgreSQL
+# Asegurar que las columnas existan en la tabla payments en la BD PostgreSQL/SQLite
 with engine.connect() as conn:
     try:
         from sqlalchemy import text
         conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS attachment_base64 TEXT;"))
+        conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS status VARCHAR(64) DEFAULT 'pendiente';"))
         conn.commit()
     except Exception as e:
         print(f"Nota/Advertencia ejecutando migración de columna attachment_base64: {e}")
+        print(f"Nota/Advertencia ejecutando migración de columna status/attachment_base64: {e}")
 
 
 app = FastAPI(title="Hello World API")

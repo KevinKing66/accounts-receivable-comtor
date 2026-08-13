@@ -13,6 +13,7 @@ class PaymentCreate(BaseModel):
     reference: Optional[str] = None
     notes: Optional[str] = None
     attachment_base64: Optional[str] = None
+    status: Optional[str] = "pendiente"
 
 
 class PaymentResponse(BaseModel):
@@ -24,10 +25,31 @@ class PaymentResponse(BaseModel):
     reference: Optional[str] = None
     notes: Optional[str] = None
     attachment_base64: Optional[str] = None
+    status: Optional[str] = "pendiente"
 
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+class PaymentDetailedResponse(PaymentResponse):
+    document_number: Optional[str] = None
+    document_type: Optional[str] = None
+    customer_name: Optional[str] = None
+    customer_document_number: Optional[str] = None
+    charge_amount: Optional[float] = None
+    charge_status: Optional[str] = None
+
+
+class PaymentPageResponse(BaseModel):
+    items: list[PaymentDetailedResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+class PaymentStatusUpdate(BaseModel):
+    status: str
 
 
 class PaymentProcessResponse(BaseModel):
@@ -42,4 +64,5 @@ class PaymentProcessResponse(BaseModel):
     unused_amount: Optional[float] = None
     applied_payments_count: Optional[int] = None
     details: Optional[list] = None
+
 

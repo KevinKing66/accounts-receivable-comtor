@@ -1,12 +1,21 @@
-from fastapi import HTTPException, status
+from typing import Optional
+from fastapi import HTTPException, Query, status
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 
-from dto.payment_dto import PaymentCreate, PaymentProcessResponse, PaymentResponse
+from dto.payment_dto import (
+    PaymentCreate,
+    PaymentPageResponse,
+    PaymentProcessResponse,
+    PaymentResponse,
+    PaymentStatusUpdate,
+    PaymentDetailedResponse,
+)
 from repositories.sqlalchemy_db_manager import SqlAlchemyDatabaseManager
 from services.payment_service import (
     ChargeNotFoundError,
     PaymentAmountError,
+    PaymentError,
     PaymentService,
 )
 
@@ -15,6 +24,37 @@ router = InferringRouter()
 
 @cbv(router)
 class PaymentEndpoint:
+    @router.get("/payments", response_model=PaymentPageResponse)
+    def list_payments(
+        self,
+        sort_by: str = Query("fecha", description="Ordenar por: fecha, estado, o ambas"),
+        sort_order: str = Query("desc", description="Orden: asc o desc"),
+        search: Optional[str] = Query(None, description="Búsqueda por cliente, referencia o doc"),
+        status_filter: Optional[str] = Query(None, alias="status", description="Filtrar por estado"),
+        page: int = Query(1, ge=1),
+        page_size: int = Query(10, ge=1, le=100),
+    ):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            return PaymentService(session).find_all_paginated(
+                sort_by=sort_by,
+                sort_order=sort_order,
+                search=search,
+                status_filter=status_filter,
+                page=page,
+                page_size=page_size,
+            )
+
+    @router.put("/payments/{payment_uuid}/status", response_model=PaymentDetailedResponse)
+    def update_payment_status(self, payment_uuid: str, body: PaymentStatusUpdate):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            try:
+                return PaymentService(session).update_payment_status(
+                    payment_uuid=payment_uuid,
+                    new_status=body.status,
+                )
+            except PaymentError as err:
+                raise HTTPException(status_code=404, detail=str(err))
+
     @router.post(
         "/payments/process",
         response_model=PaymentProcessResponse,
@@ -56,4 +96,5 @@ class PaymentEndpoint:
     def get_customer_balance(self, customer_search: str):
         with SqlAlchemyDatabaseManager.session("primary") as session:
             return PaymentService(session).get_customer_balance(customer_search)
+
 
