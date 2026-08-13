@@ -13,6 +13,7 @@ from dto.charge_dto import (
     ChargeResponse,
     ChargeCreate,
     ChargeUpdate,
+    BulkDeliveryStatusUpdate,
 )
 from models.entities.charge import Charge
 
@@ -90,6 +91,14 @@ class ChargeEndpoint:
             
             updated = service.update(charge)
             return updated
+
+    @router.patch("/charges/delivery-status/bulk", response_model=list[ChargeResponse])
+    def update_bulk_delivery_status(self, data: BulkDeliveryStatusUpdate):
+        with SqlAlchemyDatabaseManager.session("primary") as session:
+            return ChargeService(session).update_bulk_delivery_status(
+                charge_uuids=data.charge_uuids,
+                delivery_status=data.delivery_status,
+            )
 
     @router.delete("/charges/{charge_uuid}", status_code=status.HTTP_204_NO_CONTENT)
     def delete_charge(self, charge_uuid: UUID):

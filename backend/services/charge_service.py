@@ -52,6 +52,16 @@ class ChargeService(SQLAlchemyService[Charge]):
         charge.delivery_status = delivery_status
         return super().update(charge)
 
+    def update_bulk_delivery_status(self, charge_uuids: List[str], delivery_status: str) -> List[Charge]:
+        updated_charges = []
+        for charge_uuid in charge_uuids:
+            charge = super().find_by_id(charge_uuid)
+            if charge:
+                charge.delivery_status = delivery_status
+                updated = super().update(charge)
+                updated_charges.append(self._hydrate_attachment(updated))
+        return updated_charges
+
     def find_page(
         self, page: int, page_size: int, search: Optional[str] = None
     ) -> Tuple[List[Charge], int]:

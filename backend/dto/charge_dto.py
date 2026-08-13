@@ -68,3 +68,8 @@ class ChargeCustomer(BaseModel):
     customer_name: Optional[str] = None
     customer_document_type: Optional[str] = None
     customer_document_number: Optional[str] = None
+
+class BulkDeliveryStatusUpdate(BaseModel):
+    charge_uuids: List[str]
+    delivery_status: str
+
